@@ -1,0 +1,5 @@
+CreateRequest:
+  type: object
+
+CreateResult:
+  type: object

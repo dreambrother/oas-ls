@@ -1,0 +1,25 @@
+post:
+  summary: Search
+  operationId: search
+  tags:
+    - definition
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/SearchRequest'
+  responses:
+    200:
+      description: 'Result'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SearchResult'
+
+components:
+  schemas:
+    SearchRequest:
+      type: object
+    SearchResult:
+      type: object

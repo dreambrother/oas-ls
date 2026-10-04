@@ -1,0 +1,6 @@
+openapi: '3.0.0'
+paths:
+  /api/internal:
+    $ref: 'internal/create.yaml'
+  /api/internal/search:
+    $ref: 'internal/search.yaml'
