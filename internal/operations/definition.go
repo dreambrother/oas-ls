@@ -13,7 +13,6 @@ import (
 )
 
 func Definition(ctx context.Context, log *slog.Logger, doc *document.Document, params *lsp.DefinitionParams) ([]lsp.Location, error) {
-	// offset, err := doc.OffsetAt(params.Position) TODO granular click
 	line, ok := doc.Line(params.Position.Line)
 	if !ok {
 		log.WarnContext(ctx, "line not found", "line", params.Position.Line)
@@ -70,16 +69,18 @@ func findLocation(ref string, docPath string) (lsp.Location, bool) {
 		return lsp.Location{}, false
 	}
 
+	// yaml.v3 reports 1-based Line/Column, while LSP positions are 0-based.
+	line, column := n.Line-1, n.Column-1
 	return lsp.Location{
 		URI: lsp.DocumentURI("file://" + targetPath),
 		Range: lsp.Range{
 			Start: lsp.Position{
-				Line:      n.Line,
-				Character: n.Column,
+				Line:      line,
+				Character: column,
 			},
 			End: lsp.Position{
-				Line:      n.Line,
-				Character: n.Column, // TODO + len(n.Value) ?
+				Line:      line,
+				Character: column,
 			},
 		},
 	}, true
@@ -92,7 +93,6 @@ func resolveType(n *yaml.Node, t string) (*yaml.Node, bool) {
 		}
 		n = n.Content[0]
 	}
-	// TODO components/schemas
 	if n.Kind != yaml.MappingNode {
 		return nil, false
 	}

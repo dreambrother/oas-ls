@@ -1,5 +1,8 @@
 CreateRequest:
   type: object
+  properties:
+    filter:
+      $ref: 'unknown.yaml#/Filter'
 
 CreateResult:
   type: object
