@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"github.com/dreambrother/oas-ls/internal/operations"
+	"github.com/dreambrother/oas-ls/internal/textpos"
 	"github.com/owenrumney/go-lsp/document"
 	"github.com/owenrumney/go-lsp/lsp"
 )
@@ -23,8 +24,10 @@ func NewHandler(log *slog.Logger) *Handler {
 }
 
 func (h *Handler) Initialize(_ context.Context, _ *lsp.InitializeParams) (*lsp.InitializeResult, error) {
+	encoding := textpos.PositionEncoding
 	return &lsp.InitializeResult{
-		ServerInfo: &lsp.ServerInfo{Name: "oas-ls", Version: "0.1.0"},
+		Capabilities: lsp.ServerCapabilities{PositionEncoding: &encoding},
+		ServerInfo:   &lsp.ServerInfo{Name: "oas-ls", Version: "0.1.0"},
 	}, nil
 }
 

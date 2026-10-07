@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dreambrother/oas-ls/internal/textpos"
 	"github.com/owenrumney/go-lsp/document"
 	"github.com/owenrumney/go-lsp/lsp"
 	"gopkg.in/yaml.v3"
@@ -52,6 +53,7 @@ func findLocation(ref string, docPath string) (lsp.Location, bool) {
 	if !found {
 		return lsp.Location{}, false
 	}
+	// TODO check store
 
 	targetPath := filepath.Join(filepath.Dir(docPath), filepath.Clean(path))
 	data, err := os.ReadFile(targetPath)
@@ -69,19 +71,12 @@ func findLocation(ref string, docPath string) (lsp.Location, bool) {
 		return lsp.Location{}, false
 	}
 
-	// yaml.v3 reports 1-based Line/Column, while LSP positions are 0-based.
-	line, column := n.Line-1, n.Column-1
+	pos := position(data, n)
 	return lsp.Location{
 		URI: lsp.DocumentURI("file://" + targetPath),
 		Range: lsp.Range{
-			Start: lsp.Position{
-				Line:      line,
-				Character: column,
-			},
-			End: lsp.Position{
-				Line:      line,
-				Character: column,
-			},
+			Start: pos,
+			End:   pos,
 		},
 	}, true
 }
@@ -102,4 +97,16 @@ func resolveType(n *yaml.Node, t string) (*yaml.Node, bool) {
 		}
 	}
 	return nil, false
+}
+
+// Position converts a yaml.v3 node Position into an LSP Position. yaml.v3
+// reports 1-based lines and code-point columns, while LSP (given the advertised
+// UTF-16 encoding) uses 0-based lines and UTF-16 code-unit offsets.
+func position(data []byte, n *yaml.Node) lsp.Position {
+	line := n.Line - 1
+	var text string
+	if lines := strings.Split(string(data), "\n"); line >= 0 && line < len(lines) {
+		text = lines[line]
+	}
+	return lsp.Position{Line: line, Character: textpos.UTF16Column(text, n.Column-1)}
 }
