@@ -1,4 +1,4 @@
-package operations
+package operation
 
 import (
 	"context"
@@ -13,7 +13,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Definition(ctx context.Context, log *slog.Logger, doc *document.Document, params *lsp.DefinitionParams) ([]lsp.Location, error) {
+func Definition(
+	ctx context.Context,
+	log *slog.Logger,
+	doc *document.Document,
+	params *lsp.DefinitionParams,
+	docs *document.Store,
+) ([]lsp.Location, error) {
 	line, ok := doc.Line(params.Position.Line)
 	if !ok {
 		log.WarnContext(ctx, "line not found", "line", params.Position.Line)
@@ -25,7 +31,7 @@ func Definition(ctx context.Context, log *slog.Logger, doc *document.Document, p
 		return nil, nil
 	}
 	path, _ := strings.CutPrefix(string(doc.URI()), "file://")
-	loc, ok := findLocation(ref, path)
+	loc, ok := findLocation(ref, path, docs)
 	if !ok {
 		log.DebugContext(ctx, "definition is not found", "definition", ref, "source", path)
 		return nil, nil
@@ -48,18 +54,14 @@ func parseRef(line string) (string, bool) {
 	return "", false
 }
 
-func findLocation(ref string, docPath string) (lsp.Location, bool) {
+func findLocation(ref string, docPath string, docs *document.Store) (lsp.Location, bool) {
 	path, specType, found := strings.Cut(ref, "#/")
 	if !found {
 		return lsp.Location{}, false
 	}
-	// TODO check store
 
 	targetPath := filepath.Join(filepath.Dir(docPath), filepath.Clean(path))
-	data, err := os.ReadFile(targetPath)
-	if err != nil {
-		return lsp.Location{}, false
-	}
+	data, ok := readFile(targetPath, docs)
 
 	var doc yaml.Node
 	if err := yaml.Unmarshal(data, &doc); err != nil {
@@ -79,6 +81,18 @@ func findLocation(ref string, docPath string) (lsp.Location, bool) {
 			End:   pos,
 		},
 	}, true
+}
+
+func readFile(path string, docs *document.Store) ([]byte, bool) {
+	if doc, ok := docs.Get(lsp.DocumentURI("file://" + path)); ok {
+		return []byte(doc.Text()), true
+	} else {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, false
+		}
+		return data, true
+	}
 }
 
 func resolveType(n *yaml.Node, t string) (*yaml.Node, bool) {

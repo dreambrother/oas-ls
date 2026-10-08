@@ -6,3 +6,6 @@ CreateRequest:
 
 CreateResult:
   type: object
+
+CreateRequest2:
+  type: object

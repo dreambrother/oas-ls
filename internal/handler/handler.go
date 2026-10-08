@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/dreambrother/oas-ls/internal/operations"
+	"github.com/dreambrother/oas-ls/internal/operation"
 	"github.com/dreambrother/oas-ls/internal/textpos"
 	"github.com/owenrumney/go-lsp/document"
 	"github.com/owenrumney/go-lsp/lsp"
@@ -54,5 +54,5 @@ func (h *Handler) Definition(ctx context.Context, params *lsp.DefinitionParams) 
 		return nil, fmt.Errorf("document not found: %s", params.TextDocument.URI)
 	}
 	log := h.log.With("operation", "definition")
-	return operations.Definition(ctx, log, doc, params)
+	return operation.Definition(ctx, log, doc, params, h.documents)
 }

@@ -1,0 +1,18 @@
+post:
+  summary: Create
+  operationId: create
+  tags:
+    - definition
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: 'components.yaml#/CreateRequest2'
+  responses:
+    200:
+      description: 'Result'
+      content:
+        application/json:
+          schema:
+            $ref: './components.yaml#/CreateResult'
