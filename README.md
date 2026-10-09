@@ -35,3 +35,17 @@ This breaks refs into `paths`, whose keys are URL paths containing `/` — e.g.
 `#/paths/~1users~1{id}` does not resolve to the key `/users/{id}`.
 - **No percent-decoding.** The `$ref` fragment is treated as-is; percent-encoded
 fragments (e.g. `%7B` for `{`) are not decoded before pointer resolution.
+
+## Editors
+
+### Zed
+
+A Zed extension that runs `oas-ls` for YAML files lives in
+[`editors/zed`](editors/zed). See its
+[README](editors/zed/README.md) for build, dev-install and settings
+instructions.
+
+```sh
+go install ./cmd/oas-ls   # make the server available on PATH
+cd editors/zed && make check
+```

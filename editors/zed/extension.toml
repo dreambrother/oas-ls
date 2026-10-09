@@ -1,0 +1,12 @@
+id = "oas-ls"
+name = "OpenAPI Spec (oas-ls)"
+version = "0.1.0"
+schema_version = 1
+authors = ["Nikita Shmakov <nikshmakov@gmail.com>"]
+description = "Navigate OpenAPI $ref links (go to definition) in YAML specs via the oas-ls language server"
+repository = "https://github.com/dreambrother/oas-ls"
+
+[language_servers.oas-ls]
+name = "OpenAPI Spec LSP"
+languages = ["YAML"]
+opt_in_languages = ["YAML"]
