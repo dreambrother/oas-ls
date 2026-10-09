@@ -60,7 +60,12 @@ func findLocation(ref string, docPath string, docs *document.Store) (lsp.Locatio
 		return lsp.Location{}, false
 	}
 
-	targetPath := filepath.Join(filepath.Dir(docPath), filepath.Clean(path))
+	var targetPath string
+	if len(path) == 0 { // if current file
+		targetPath = docPath
+	} else {
+		targetPath = filepath.Join(filepath.Dir(docPath), filepath.Clean(path))
+	}
 	data, ok := readFile(targetPath, docs)
 
 	var doc yaml.Node
@@ -96,21 +101,35 @@ func readFile(path string, docs *document.Store) ([]byte, bool) {
 }
 
 func resolveType(n *yaml.Node, t string) (*yaml.Node, bool) {
-	if n.Kind == yaml.DocumentNode {
-		if len(n.Content) == 0 {
-			return nil, false
-		}
-		n = n.Content[0]
-	}
-	if n.Kind != yaml.MappingNode {
+	if n.Kind != yaml.DocumentNode {
 		return nil, false
 	}
-	for i := 0; i < len(n.Content); i += 2 {
-		if n.Content[i].Value == t {
-			return n.Content[i], true
+	if len(n.Content) == 0 {
+		return nil, false
+	}
+	n = n.Content[0]
+
+	var title *yaml.Node
+	ok := true
+	for _, segment := range strings.Split(t, "/") {
+		title, n, ok = resolveSegment(n, segment)
+		if !ok {
+			return nil, false
 		}
 	}
-	return nil, false
+	return title, true
+}
+
+func resolveSegment(n *yaml.Node, s string) (title *yaml.Node, content *yaml.Node, ok bool) {
+	if n.Kind != yaml.MappingNode {
+		return nil, nil, false
+	}
+	for i := 0; i < len(n.Content); i += 2 {
+		if n.Content[i].Value == s {
+			return n.Content[i], n.Content[i+1], true
+		}
+	}
+	return nil, nil, false
 }
 
 // Position converts a yaml.v3 node Position into an LSP Position. yaml.v3

@@ -3,6 +3,8 @@ package handler
 import (
 	"path/filepath"
 	"testing"
+
+	"github.com/owenrumney/go-lsp/lsp"
 )
 
 func TestDefinition(t *testing.T) {
@@ -10,31 +12,12 @@ func TestDefinition(t *testing.T) {
 	uri, content := loadTestdata(t, "definition/internal/create.yaml")
 
 	h.DidOpen(uri, "yaml", content)
-	definitions, err := h.Definition(uri, 17, 39)
+	definitions, err := h.Definition(uri, 17, 39) // components.yaml#/CreateResult
 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(definitions) != 1 {
-		t.Fatal("expected 1 definition but was", len(definitions))
-	}
-	d := definitions[0]
-	expectedPath, _ := filepath.Abs("testdata/definition/internal/components.yaml")
-	if expected := toFileURI(expectedPath); string(d.URI) != expected {
-		t.Errorf("expected definition URI to be '%s', but was '%s'", expected, d.URI)
-	}
-	if d.Range.Start.Line != 6 {
-		t.Error("expected definition start line to be 6, but was", d.Range.Start.Line)
-	}
-	if d.Range.Start.Character != 0 {
-		t.Error("expected definition start character to be 0, but was", d.Range.Start.Character)
-	}
-	if d.Range.End.Line != 6 {
-		t.Error("expected definition end line to be 6, but was", d.Range.End.Line)
-	}
-	if d.Range.End.Character != 0 {
-		t.Error("expected definition end character to be 0, but was", d.Range.End.Character)
-	}
+	expectDefinition(t, definitions, "testdata/definition/internal/components.yaml", 6, 0, 6, 0)
 }
 
 func TestDefinition_AfterDocChange(t *testing.T) {
@@ -44,29 +27,51 @@ func TestDefinition_AfterDocChange(t *testing.T) {
 
 	h.DidOpen(uri, "yaml", content)
 	h.DidChange(uri, 2, changedContent)
-	definitions, err := h.Definition(uri, 10, 34)
+	definitions, err := h.Definition(uri, 10, 34) // components.yaml#/CreateRequest2
 
 	if err != nil {
 		t.Fatal(err)
 	}
+	expectDefinition(t, definitions, "testdata/definition/internal/components.yaml", 9, 0, 9, 0)
+}
+
+func TestDefinition_SameDocComponent(t *testing.T) {
+	h := newTestServer(t)
+	uri, content := loadTestdata(t, "definition/internal/search.yaml")
+
+	h.DidOpen(uri, "yaml", content)
+	definitions, err := h.Definition(uri, 17, 40) // #/components/schemas/SearchResult
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectDefinition(t, definitions, "testdata/definition/internal/search.yaml", 23, 4, 23, 4)
+}
+
+func expectDefinition(
+	t *testing.T,
+	definitions []lsp.Location,
+	path string,
+	startLine, startCharacter, endLine, endCharacter int,
+) {
 	if len(definitions) != 1 {
 		t.Fatal("expected 1 definition but was", len(definitions))
 	}
 	d := definitions[0]
-	expectedPath, _ := filepath.Abs("testdata/definition/internal/components.yaml")
+	expectedPath, _ := filepath.Abs(path)
 	if expected := toFileURI(expectedPath); string(d.URI) != expected {
 		t.Errorf("expected definition URI to be '%s', but was '%s'", expected, d.URI)
 	}
-	if d.Range.Start.Line != 9 {
+	if d.Range.Start.Line != startLine {
 		t.Error("expected definition start line to be 6, but was", d.Range.Start.Line)
 	}
-	if d.Range.Start.Character != 0 {
+	if d.Range.Start.Character != startCharacter {
 		t.Error("expected definition start character to be 0, but was", d.Range.Start.Character)
 	}
-	if d.Range.End.Line != 9 {
+	if d.Range.End.Line != endLine {
 		t.Error("expected definition end line to be 6, but was", d.Range.End.Line)
 	}
-	if d.Range.End.Character != 0 {
+	if d.Range.End.Character != endCharacter {
 		t.Error("expected definition end character to be 0, but was", d.Range.End.Character)
 	}
 }
