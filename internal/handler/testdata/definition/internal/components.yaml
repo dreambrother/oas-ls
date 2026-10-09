@@ -6,6 +6,12 @@ CreateRequest:
 
 CreateResult:
   type: object
+  properties:
+    some:
+      $ref: '#/SomeType'
 
 CreateRequest2:
+  type: object
+
+SomeType:
   type: object

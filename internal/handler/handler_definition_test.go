@@ -17,7 +17,7 @@ func TestDefinition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectDefinition(t, definitions, "testdata/definition/internal/components.yaml", 6, 0, 6, 0)
+	expectDefinition(t, definitions, "definition/internal/components.yaml", 6, 0, 6, 0)
 }
 
 func TestDefinition_AfterDocChange(t *testing.T) {
@@ -32,10 +32,10 @@ func TestDefinition_AfterDocChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectDefinition(t, definitions, "testdata/definition/internal/components.yaml", 9, 0, 9, 0)
+	expectDefinition(t, definitions, "definition/internal/components.yaml", 12, 0, 12, 0)
 }
 
-func TestDefinition_SameDocComponent(t *testing.T) {
+func TestDefinition_SameDocComponentsSchemas(t *testing.T) {
 	h := newTestServer(t)
 	uri, content := loadTestdata(t, "definition/internal/search.yaml")
 
@@ -45,7 +45,20 @@ func TestDefinition_SameDocComponent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectDefinition(t, definitions, "testdata/definition/internal/search.yaml", 23, 4, 23, 4)
+	expectDefinition(t, definitions, "definition/internal/search.yaml", 23, 4, 23, 4)
+}
+
+func TestDefinition_SameDocRef(t *testing.T) {
+	h := newTestServer(t)
+	uri, content := loadTestdata(t, "definition/internal/components.yaml")
+
+	h.DidOpen(uri, "yaml", content)
+	definitions, err := h.Definition(uri, 10, 15) // #/SomeType
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectDefinition(t, definitions, "definition/internal/components.yaml", 15, 0, 15, 0)
 }
 
 func expectDefinition(
@@ -58,21 +71,21 @@ func expectDefinition(
 		t.Fatal("expected 1 definition but was", len(definitions))
 	}
 	d := definitions[0]
-	expectedPath, _ := filepath.Abs(path)
+	expectedPath, _ := filepath.Abs("testdata/" + path)
 	if expected := toFileURI(expectedPath); string(d.URI) != expected {
 		t.Errorf("expected definition URI to be '%s', but was '%s'", expected, d.URI)
 	}
 	if d.Range.Start.Line != startLine {
-		t.Error("expected definition start line to be 6, but was", d.Range.Start.Line)
+		t.Errorf("expected definition start line to be '%d', but was '%d'", startLine, d.Range.Start.Line)
 	}
 	if d.Range.Start.Character != startCharacter {
-		t.Error("expected definition start character to be 0, but was", d.Range.Start.Character)
+		t.Errorf("expected definition start character to be '%d', but was '%d'", startCharacter, d.Range.Start.Character)
 	}
 	if d.Range.End.Line != endLine {
-		t.Error("expected definition end line to be 6, but was", d.Range.End.Line)
+		t.Errorf("expected definition end line to be '%d', but was '%d'", endLine, d.Range.End.Line)
 	}
 	if d.Range.End.Character != endCharacter {
-		t.Error("expected definition end character to be 0, but was", d.Range.End.Character)
+		t.Errorf("expected definition end character to be '%d', but was '%d'", endCharacter, d.Range.End.Character)
 	}
 }
 
