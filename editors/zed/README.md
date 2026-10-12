@@ -13,30 +13,16 @@ contains the Zed extension (a small Rust program compiled to
 - The `oas-ls` binary on `PATH` (see below), or an explicit path in settings.
 - Rust via [rustup](https://rustup.rs) — required by Zed to compile the
   extension. Zed installs the `wasm32-wasip2` target automatically.
-
-### Immutable Fedora (Silverblue / Kinoite)
-
-The host has no C toolchain, but Cargo still needs a host linker to build
-proc-macro and build-script crates (the wasm artifact itself is linked with the
-bundled `rust-lld`). Use a compiler from a toolbox, e.g. `~/.local/bin/toolbox-cc`:
-
-```sh
-#!/bin/sh
-exec /usr/bin/toolbox run -c <toolbox-with-gcc> gcc "$@"
-```
-
-and point Cargo at it in `~/.cargo/config.toml`:
-
-```toml
-[target.x86_64-unknown-linux-gnu]
-linker = "/home/<user>/.local/bin/toolbox-cc"
-```
+- A host C toolchain (`cc`, or `gcc`/`clang`). The wasm artifact itself is
+  linked with the bundled `rust-lld`, but Cargo still needs a host linker to
+  build proc-macro and build-script crates. If `cc` is missing, install a
+  C compiler and make sure it is on `PATH`.
 
 ## Build and install the server
 
 ```sh
 # from the repository root
-go install ./cmd/oas-ls   # binary lands in ~/.go/bin (already on PATH)
+go install ./cmd/oas-ls   # installs the server into "$(go env GOPATH)/bin"
 # or
 go build -o oas-ls ./cmd/oas-ls
 ```
@@ -84,7 +70,7 @@ Optional per-server overrides:
   "lsp": {
     "oas-ls": {
       "binary": {
-        "path": "/home/user/.go/bin/oas-ls",
+        "path": "/path/to/oas-ls",
         "arguments": [],
         "env": {}
       }
