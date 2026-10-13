@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/dreambrother/oas-ls/internal/file"
 	"github.com/owenrumney/go-lsp/lsp"
 )
 
@@ -61,6 +62,19 @@ func TestDefinition_SameDocRef(t *testing.T) {
 	expectDefinition(t, definitions, "definition/internal/components.yaml", 15, 0, 15, 0)
 }
 
+func TestDefinition_FileRef(t *testing.T) {
+	h := newTestServer(t)
+	uri, content := loadTestdata(t, "definition/api.yaml")
+
+	h.DidOpen(uri, "yaml", content)
+	definitions, err := h.Definition(uri, 3, 20) // #/SomeType
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectDefinition(t, definitions, "definition/internal/create.yaml", 0, 0, 0, 0)
+}
+
 func expectDefinition(
 	t *testing.T,
 	definitions []lsp.Location,
@@ -72,7 +86,7 @@ func expectDefinition(
 	}
 	d := definitions[0]
 	expectedPath, _ := filepath.Abs("testdata/" + path)
-	if expected := toFileURI(expectedPath); string(d.URI) != expected {
+	if expected := file.ToURI(expectedPath); string(d.URI) != expected {
 		t.Errorf("expected definition URI to be '%s', but was '%s'", expected, d.URI)
 	}
 	if d.Range.Start.Line != startLine {

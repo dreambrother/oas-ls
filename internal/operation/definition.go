@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/dreambrother/oas-ls/internal/file"
 	"github.com/dreambrother/oas-ls/internal/textpos"
 	"github.com/owenrumney/go-lsp/document"
 	"github.com/owenrumney/go-lsp/lsp"
@@ -57,6 +58,13 @@ func parseRef(line string) (string, bool) {
 func findLocation(ref string, docPath string, docs *document.Store) (lsp.Location, bool) {
 	path, specType, found := strings.Cut(ref, "#/")
 	if !found {
+		refPath := filepath.Join(filepath.Dir(docPath), filepath.Clean(path))
+		if fileExists(refPath) { // if file click
+			return lsp.Location{
+				URI:   file.ToDocumentURI(refPath),
+				Range: lsp.Range{},
+			}, true
+		}
 		return lsp.Location{}, false
 	}
 
@@ -80,7 +88,7 @@ func findLocation(ref string, docPath string, docs *document.Store) (lsp.Locatio
 
 	pos := position(data, n)
 	return lsp.Location{
-		URI: lsp.DocumentURI("file://" + targetPath),
+		URI: file.ToDocumentURI(targetPath),
 		Range: lsp.Range{
 			Start: pos,
 			End:   pos,
@@ -88,8 +96,13 @@ func findLocation(ref string, docPath string, docs *document.Store) (lsp.Locatio
 	}, true
 }
 
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 func readFile(path string, docs *document.Store) ([]byte, bool) {
-	if doc, ok := docs.Get(lsp.DocumentURI("file://" + path)); ok {
+	if doc, ok := docs.Get(file.ToDocumentURI(path)); ok {
 		return []byte(doc.Text()), true
 	} else {
 		data, err := os.ReadFile(path)

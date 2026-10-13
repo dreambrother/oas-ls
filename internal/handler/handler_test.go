@@ -3,11 +3,11 @@ package handler
 import (
 	"bytes"
 	"log/slog"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/dreambrother/oas-ls/internal/file"
 	"github.com/owenrumney/go-lsp/lsp"
 	"github.com/owenrumney/go-lsp/servertest"
 )
@@ -38,9 +38,5 @@ func loadTestdata(t *testing.T, name string) (lsp.DocumentURI, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return lsp.DocumentURI(toFileURI(path)), string(data)
-}
-
-func toFileURI(path string) string {
-	return (&url.URL{Scheme: "file", Path: filepath.ToSlash(path)}).String()
+	return lsp.DocumentURI(file.ToURI(path)), string(data)
 }
