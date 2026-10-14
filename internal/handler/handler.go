@@ -48,7 +48,7 @@ func (h *Handler) DidClose(ctx context.Context, params *lsp.DidCloseTextDocument
 
 func (h *Handler) Shutdown(_ context.Context) error { return nil }
 
-func (h *Handler) Definition(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.Location, error) {
+func (h *Handler) DefinitionLinks(ctx context.Context, params *lsp.DefinitionParams) ([]lsp.LocationLink, error) {
 	doc, ok := h.documents.Get(params.TextDocument.URI)
 	if !ok {
 		return nil, fmt.Errorf("document not found: %s", params.TextDocument.URI)

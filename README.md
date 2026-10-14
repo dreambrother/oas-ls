@@ -14,9 +14,9 @@ reliably. Associate only YAML files with `oas-ls` in your editor.
 
 ## Features
 
-- [x] **Go to definition** for `$ref` — line-based (precise cursor targeting not yet implemented)
-- [ ] **Rename** a symbol and update all its `$ref`s
+- [x] **Go to definition** for `$ref`
 - [ ] **Find usages / references**
+- [ ] **Rename** a symbol and update all its `$ref`s
 
 ## Known limitations
 

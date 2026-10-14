@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/dreambrother/oas-ls/internal/file"
 	"github.com/dreambrother/oas-ls/internal/textpos"
@@ -20,13 +21,13 @@ func Definition(
 	doc *document.Document,
 	params *lsp.DefinitionParams,
 	docs *document.Store,
-) ([]lsp.Location, error) {
+) ([]lsp.LocationLink, error) {
 	line, ok := doc.Line(params.Position.Line)
 	if !ok {
 		log.WarnContext(ctx, "line not found", "line", params.Position.Line)
 		return nil, nil
 	}
-	ref, ok := parseRef(line)
+	ref, start, end, ok := parseRef(line)
 	if !ok {
 		log.DebugContext(ctx, "line is not parseable", "line", line)
 		return nil, nil
@@ -37,22 +38,46 @@ func Definition(
 		log.DebugContext(ctx, "definition is not found", "definition", ref, "source", path)
 		return nil, nil
 	}
-	return []lsp.Location{loc}, nil
+
+	locLink := lsp.LocationLink{
+		OriginSelectionRange: &lsp.Range{
+			Start: lsp.Position{
+				Line:      params.Position.Line,
+				Character: textpos.UTF16Column(line, start),
+			},
+			End: lsp.Position{
+				Line:      params.Position.Line,
+				Character: textpos.UTF16Column(line, end),
+			},
+		},
+		TargetURI:            loc.URI,
+		TargetRange:          loc.Range,
+		TargetSelectionRange: loc.Range,
+	}
+	return []lsp.LocationLink{locLink}, nil
 }
 
-func parseRef(line string) (string, bool) {
+// parseRef returns the $ref value of a line together with the 0-based
+// code-point offsets of that value within the line.
+func parseRef(line string) (ref string, start, end int, ok bool) {
 	refNode := &yaml.Node{}
 	err := yaml.Unmarshal([]byte(line), refNode)
 	if err != nil {
-		return "", false
+		return "", 0, 0, false
 	}
 	if refNode.Kind == yaml.DocumentNode {
 		refNode = refNode.Content[0]
 		if refNode.Kind == yaml.MappingNode && refNode.Content[0].Value == "$ref" {
-			return refNode.Content[1].Value, true
+			value := refNode.Content[1]
+			start = value.Column - 1 // yaml.v3 reports 1-based code-point columns
+			if value.Style == yaml.SingleQuotedStyle || value.Style == yaml.DoubleQuotedStyle {
+				start++ // a quoted scalar starts at the opening quote
+			}
+			end = start + utf8.RuneCountInString(value.Value)
+			return value.Value, start, end, true
 		}
 	}
-	return "", false
+	return "", 0, 0, false
 }
 
 func findLocation(ref string, docPath string, docs *document.Store) (lsp.Location, bool) {
