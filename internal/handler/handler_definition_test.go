@@ -17,7 +17,7 @@ func TestDefinition(t *testing.T) {
 	h.DidOpen(uri, "yaml", content)
 	links := definitionLinks(t, h, uri, 17, 39) // components.yaml#/CreateResult
 
-	expectDefinition(t, links, "definition/internal/components.yaml", 6, 0, 6, 0)
+	expectDefinition(t, links, "definition/internal/components.yaml", 6, 0, 6, 12)
 	expectOriginRange(t, links, 17, 19, 17, 50)
 }
 
@@ -30,7 +30,7 @@ func TestDefinition_AfterDocChange(t *testing.T) {
 	h.DidChange(uri, 2, changedContent)
 	links := definitionLinks(t, h, uri, 10, 34) // components.yaml#/CreateRequest2
 
-	expectDefinition(t, links, "definition/internal/components.yaml", 12, 0, 12, 0)
+	expectDefinition(t, links, "definition/internal/components.yaml", 12, 0, 12, 14)
 	expectOriginRange(t, links, 10, 17, 10, 48)
 }
 
@@ -41,7 +41,7 @@ func TestDefinition_SameDocComponentsSchemas(t *testing.T) {
 	h.DidOpen(uri, "yaml", content)
 	links := definitionLinks(t, h, uri, 17, 40) // #/components/schemas/SearchResult
 
-	expectDefinition(t, links, "definition/internal/search.yaml", 23, 4, 23, 4)
+	expectDefinition(t, links, "definition/internal/search.yaml", 23, 4, 23, 16)
 	expectOriginRange(t, links, 17, 19, 17, 52)
 }
 
@@ -52,7 +52,7 @@ func TestDefinition_SameDocRef(t *testing.T) {
 	h.DidOpen(uri, "yaml", content)
 	links := definitionLinks(t, h, uri, 10, 15) // #/SomeType
 
-	expectDefinition(t, links, "definition/internal/components.yaml", 15, 0, 15, 0)
+	expectDefinition(t, links, "definition/internal/components.yaml", 15, 0, 15, 8)
 	expectOriginRange(t, links, 10, 13, 10, 23)
 }
 

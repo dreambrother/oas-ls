@@ -148,7 +148,7 @@ func TestDefinition_OriginSelectionRange(t *testing.T) {
 
 	if got, want := link.TargetRange, (lsp.Range{
 		Start: lsp.Position{Line: 6, Character: 4},
-		End:   lsp.Position{Line: 6, Character: 4},
+		End:   lsp.Position{Line: 6, Character: 7}, // 'Foo' is 3 runes long
 	}); got != want {
 		t.Errorf("TargetRange = %+v, want %+v", got, want)
 	}

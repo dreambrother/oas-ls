@@ -111,12 +111,12 @@ func findLocation(ref string, docPath string, docs *document.Store) (lsp.Locatio
 		return lsp.Location{}, false
 	}
 
-	pos := position(data, n)
+	start, end := position(data, n)
 	return lsp.Location{
 		URI: file.ToDocumentURI(targetPath),
 		Range: lsp.Range{
-			Start: pos,
-			End:   pos,
+			Start: start,
+			End:   end,
 		},
 	}, true
 }
@@ -149,7 +149,7 @@ func resolveType(n *yaml.Node, t string) (*yaml.Node, bool) {
 
 	var title *yaml.Node
 	ok := true
-	for _, segment := range strings.Split(t, "/") {
+	for segment := range strings.SplitSeq(t, "/") {
 		title, n, ok = resolveSegment(n, segment)
 		if !ok {
 			return nil, false
@@ -173,11 +173,13 @@ func resolveSegment(n *yaml.Node, s string) (title *yaml.Node, content *yaml.Nod
 // Position converts a yaml.v3 node Position into an LSP Position. yaml.v3
 // reports 1-based lines and code-point columns, while LSP (given the advertised
 // UTF-16 encoding) uses 0-based lines and UTF-16 code-unit offsets.
-func position(data []byte, n *yaml.Node) lsp.Position {
+func position(data []byte, n *yaml.Node) (start, end lsp.Position) {
 	line := n.Line - 1
 	var text string
 	if lines := strings.Split(string(data), "\n"); line >= 0 && line < len(lines) {
 		text = lines[line]
 	}
-	return lsp.Position{Line: line, Character: textpos.UTF16Column(text, n.Column-1)}
+	start = lsp.Position{Line: line, Character: textpos.UTF16Column(text, n.Column-1)}
+	end = lsp.Position{Line: line, Character: start.Character + textpos.UTF16Len(n.Value)}
+	return start, end
 }

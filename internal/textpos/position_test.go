@@ -121,3 +121,26 @@ func TestUTF16Column(t *testing.T) {
 		})
 	}
 }
+
+func TestUTF16Len(t *testing.T) {
+	tests := []struct {
+		name string
+		s    string
+		want int
+	}{
+		{name: "empty", s: "", want: 0},
+		{name: "ascii", s: "hello", want: 5},
+		{name: "cyrillic", s: "привет", want: 6},
+		{name: "cjk", s: "日本語", want: 3},
+		{name: "emoji is a surrogate pair", s: "😀", want: 2},
+		{name: "mixed", s: "aп😀日", want: 5},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := UTF16Len(tt.s); got != tt.want {
+				t.Errorf("UTF16Len(%q) = %d, want %d", tt.s, got, tt.want)
+			}
+		})
+	}
+}

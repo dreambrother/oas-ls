@@ -23,3 +23,16 @@ func UTF16Column(line string, codePoints int) int {
 	}
 	return units
 }
+
+// UTF16Len returns the number of UTF-16 code units occupied by s.
+func UTF16Len(s string) int {
+	units := 0
+	for _, r := range s {
+		if r > 0xFFFF {
+			units += 2
+		} else {
+			units++
+		}
+	}
+	return units
+}
